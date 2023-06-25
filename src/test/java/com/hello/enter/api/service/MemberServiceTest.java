@@ -6,6 +6,7 @@ import com.hello.enter.api.exception.MemberNotFound;
 import com.hello.enter.api.repository.MemberRepository;
 import com.hello.enter.api.request.MemberCreate;
 import com.hello.enter.api.request.MemberEdit;
+import com.hello.enter.api.request.MemberSearch;
 import com.hello.enter.api.response.MemberResponse;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,9 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import java.util.List;
+import java.util.stream.IntStream;
 
 @SpringBootTest
 class MemberServiceTest {
@@ -129,6 +133,31 @@ class MemberServiceTest {
         // then
         Assertions.assertThat(memberRepository.findAll().size())
                 .isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("다수 회원 조회")
+    void members() throws Exception {
+        // given
+        List<Member> memberCreates = IntStream.range(0, 100)
+                .mapToObj(i -> Member.builder()
+                        .email("ilikeamoney" + i + "@gmail.com")
+                        .phone("01012345678")
+                        .password("1234")
+                        .name("짭종")
+                        .build()).toList();
+
+        memberRepository.saveAll(memberCreates);
+
+        MemberSearch search = MemberSearch.builder()
+                .build();
+
+        // when
+        List<MemberResponse> members = memberService.findAll(search);
+
+
+        // then
+        Assertions.assertThat(members.size()).isEqualTo(10);
     }
 
 

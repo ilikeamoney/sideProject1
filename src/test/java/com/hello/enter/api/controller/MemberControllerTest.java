@@ -5,7 +5,10 @@ import com.hello.enter.api.domain.Member;
 import com.hello.enter.api.repository.MemberRepository;
 import com.hello.enter.api.request.MemberCreate;
 import com.hello.enter.api.request.MemberEdit;
+import com.hello.enter.api.request.MemberSearch;
 import org.assertj.core.api.Assertions;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,9 +18,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
+import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,6 +44,10 @@ class MemberControllerTest {
         memberRepository.deleteAll();
     }
 
+    @AfterEach
+    void afterTest() throws Exception {
+        memberRepository.deleteAll();
+    }
 
 
     @Test
@@ -86,19 +97,15 @@ class MemberControllerTest {
     @DisplayName("가입한 이메일로 정보 찾기")
     void findEmail() throws Exception {
         // given
-        memberRepository.save(Member.builder()
+        Long memberId = memberRepository.save(Member.builder()
                 .name("짭종")
                 .email("ilikeamoney@gmail.com")
                 .password("1234")
                 .phone("01029419010")
-                .build());
-
-        String email = "ilikeamoney@gmail.com";
+                .build()).getId();
 
         // expected
-        mockMvc.perform(get("/find")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(email))
+        mockMvc.perform(get("/find/{memberId}", memberId))
                 .andExpect(status().isOk())
                 .andDo(print());
     }
@@ -148,4 +155,28 @@ class MemberControllerTest {
                 .isEqualTo(0);
     }
 
+
+    @Test
+    @DisplayName("다수의 회원 조회")
+    void members() throws Exception {
+        // given
+        List<Member> members = IntStream.range(0, 30)
+                .mapToObj(i -> Member.builder()
+                        .email("ilikeamoney" + i + "@gmail.com")
+                        .name("zzabjong")
+                        .phone("01012345678")
+                        .password("1234")
+                        .build()).toList();
+
+        memberRepository.saveAll(members);
+
+        // expected
+        mockMvc.perform(get("/members?page=1&size=10")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()", is(10)))
+                .andExpect(jsonPath("$[0].id").value(30))
+                .andExpect(jsonPath("$[0].name").value("zzabjong"))
+                .andDo(print());
+    }
 }

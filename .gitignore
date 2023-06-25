@@ -35,3 +35,6 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### nodeenv ###
+env-node-18
