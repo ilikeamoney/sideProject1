@@ -19,8 +19,8 @@ public class MemberController {
 
 
     @PostMapping("/")
-    public void signUp(@RequestBody @Valid MemberCreate memberCreate) {
-        memberService.create(memberCreate);
+    public Long signUp(@RequestBody @Valid MemberCreate memberCreate) {
+        return memberService.create(memberCreate);
     }
 
     @GetMapping("/find/{id}")
